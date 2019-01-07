@@ -1,2 +1,2 @@
 # dWebSock
-Life is like a box of chocolate..
+dWS(devil web socket)
