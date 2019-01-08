@@ -23,7 +23,7 @@ namespace yasuo
         Epoll(std::string ip, int port) : m_strIP(ip), m_iPort(port) { Epoll(); };
 
         Epoll();
-       
+        
         ~Epoll();
 
         int start();

@@ -85,6 +85,14 @@ namespace yasuo
         }
     }
 
+    Epoll::stop()
+    {
+        if (EPOLL_STATUS::START == m_iEpollStatus)
+        {
+            m_iEpollStatus = EPOLL_STATUS::STOP
+        }
+    }
+
     Epoll::doEpoll()
     {
         while (EPOLL_STATUS::START == m_iEpollStatus)
