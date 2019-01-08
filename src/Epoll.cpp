@@ -20,46 +20,46 @@ namespace yasuo
 {
     Epoll::Epoll()
     {
-		sockaddr_in sin = { 0 };
+        sockaddr_in sin = { 0 };
 
-		sin.sin_addr.s_addr = inet_addr(this->m_strIP.c_str());
-		sin.sin_family = AF_INET;
-		sin.sin_port = htons(this->m_iPort);
+        sin.sin_addr.s_addr = inet_addr(this->m_strIP.c_str());
+        sin.sin_family = AF_INET;
+        sin.sin_port = htons(this->m_iPort);
 
-		m_iListenFd = socket(AF_INET, SOCK_STREAM, 0);
-		if (0 >= m_iListenFd)
+        m_iListenFd = socket(AF_INET, SOCK_STREAM, 0);
+        if (0 >= m_iListenFd)
         {
-			throw std::runtime_error("socket() failed, error code: " + std::to_string(errno));
+            throw std::runtime_error("socket() failed, error code: " + std::to_string(errno));
         }
 
-		if (bind(m_iListenFd, reinterpret_cast<sockaddr *>(&sin), sizeof(sin)))
+        if (bind(m_iListenFd, reinterpret_cast<sockaddr *>(&sin), sizeof(sin)))
         {
-			throw std::runtime_error("bind() failed, error code: " + std::to_string(errno));
+            throw std::runtime_error("bind() failed, error code: " + std::to_string(errno));
         }
 
-		if (false == SetNonblocking(m_iListenFd))
+        if (false == SetNonblocking(m_iListenFd))
         {
-			throw std::runtime_error("SetNonBlocking() failed, error code: " + std::to_string(errno));
+            throw std::runtime_error("SetNonBlocking() failed, error code: " + std::to_string(errno));
         }
 
-		if (-1 == listen(m_iListenFd, SOMAXCONN))
+        if (-1 == listen(m_iListenFd, SOMAXCONN))
         {
-			throw std::runtime_error("listen() failed, error code: " + std::to_string(errno));
+            throw std::runtime_error("listen() failed, error code: " + std::to_string(errno));
         }
 
-		m_iEpfd = epoll_create1(0);
-		if (-1 == m_iEpfd)
+        m_iEpfd = epoll_create1(0);
+        if (-1 == m_iEpfd)
         {
-			throw std::runtime_error("epoll_create1() failed, error code: " + std::to_string(errno));
+            throw std::runtime_error("epoll_create1() failed, error code: " + std::to_string(errno));
         }
 
-		epoll_event e_event;
-		e_event.events = EPOLLIN;
-		e_event.data.fd = m_iListenFd;
+        epoll_event e_event;
+        e_event.events = EPOLLIN;
+        e_event.data.fd = m_iListenFd;
 
-		if (-1 == epoll_ctl(m_iEpfd, EPOLL_CTL_ADD, m_iListenFd, &e_event))
+        if (-1 == epoll_ctl(m_iEpfd, EPOLL_CTL_ADD, m_iListenFd, &e_event))
         {
-			throw std::runtime_error("epoll_ctl() failed, error code: " + std::to_string(errno));
+            throw std::runtime_error("epoll_ctl() failed, error code: " + std::to_string(errno));
         }
 
     };
