@@ -37,9 +37,9 @@ namespace yasuo
             throw std::runtime_error("bind() failed, error code: " + std::to_string(errno));
         }
 
-        if (false == SetNonblocking(m_iListenFd))
+        if (false == setNonblocking(m_iListenFd))
         {
-            throw std::runtime_error("SetNonBlocking() failed, error code: " + std::to_string(errno));
+            throw std::runtime_error("setNonBlocking() failed, error code: " + std::to_string(errno));
         }
 
         if (-1 == listen(m_iListenFd, SOMAXCONN))
@@ -97,17 +97,69 @@ namespace yasuo
     {
         while (EPOLL_STATUS::START == m_iEpollStatus)
         {
-            int numFdReady = epoll_wait(m_iEpfd, m_pEvents, m_iNumEvents, 0);
-            for (int i = 0; i < numFdReady; i++) 
+            auto numFdReady = epoll_wait(m_iEpfd, m_pEvents, m_iNumEvents, 0);
+            for (auto i = 0; i < numFdReady; i++) 
             {
-                Poll *poll = (Poll *) readyEvents[i].data.ptr;
-                int status = -bool(readyEvents[i].events & EPOLLERR);
-                callbacks[poll->state.cbIndex](poll, status, readyEvents[i].events);
+                handleEpollEvent(m_pEvents[i])
             }
         }
     }
 
-    bool Epoll::SetNonblocking(int fd)
+    void Epoll::handleEpollEvent(epoll_event &event)
+    {
+        if (event.data.fd == m_iListenFd)
+        {
+
+        }
+        else if (event.events & EPOLLIN)
+        {
+
+        }
+    }
+
+    void Epoll::handleAcceptEvent(epoll_event &event)
+    {
+        sockaddr_in client_sin;
+		socklen_t sin_size = sizeof(client_sin);
+		ClientDescriptorType *client;
+
+		int client_fd = accept(listen_fd_, reinterpret_cast<sockaddr *>(&client_sin), &sin_size);
+		if(client_fd == -1)
+		{
+			printf("accept() failed, error code: %d\n", errno);
+			return false;
+		}
+
+		if(!SetNonblocking(client_fd))
+		{
+			printf("failed to put fd into non-blocking mode, error code: %d\n", errno);
+			return false;
+		}
+
+		//allocate and initialize a new descriptor for the client
+		client = new ClientDescriptorType(client_fd, client_sin.sin_addr, 
+										  ntohs(client_sin.sin_port), 
+										  timeout_secs_);
+
+		epoll_event ev;
+		ev.events = EPOLLIN | EPOLLRDHUP | EPOLLET;	//client events will be handled in edge-triggered mode
+		ev.data.ptr = client;						//we will pass client descriptor with every event
+
+		if(epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, client_fd, &ev) == 1)
+		{
+			printf("epoll_ctl() failed, error code: %d\n", errno);
+			delete client;
+			return false;
+		}
+
+		//store new client descriptor into the map of clients
+		clients_[client_fd] = client;
+
+		printf("[+] new client: %s:%d\n", inet_ntoa(client_sin.sin_addr), ntohs(client_sin.sin_port));
+		return true;
+    }
+
+    bool Epoll::setNonblocking(int fd)
 	{
 		int flags = fcntl(fd, F_GETFL, 0);
 		if (-1 == flags)

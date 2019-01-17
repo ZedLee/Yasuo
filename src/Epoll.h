@@ -23,7 +23,7 @@ namespace yasuo
         Epoll(std::string ip, int port) : m_strIP(ip), m_iPort(port) { Epoll(); };
 
         Epoll();
-        
+
         ~Epoll();
 
         int start();
@@ -32,10 +32,16 @@ namespace yasuo
 
     protected:
         // Set a file descriptor as non blocking mode
-    	bool SetNonblocking(int fd);
+    	bool setNonblocking(int fd);
 
         // Do epoll
         void doEpoll();
+
+        // handle epoll event
+        void handleEpollEvent(epoll_event &event);
+
+        // handle accpct event
+        void handleAcceptEvent(epoll_event &event);
 
     private:
 
